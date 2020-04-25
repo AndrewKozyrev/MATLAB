@@ -1,0 +1,40 @@
+for i = 2:8000000
+y(2) = 3.610209610209611*y(1)*(1-y(1));
+y(1) = y(2);
+if (y(1) == thresh)
+disp("bingo\n\n");
+break;
+end
+end
+
+
+thresh =    0.3175235786950421
+
+filename = 'C:\Users\hitma\OneDrive\ROOT\Personal\Projects\MATLAB\logistic_map_data.dat';
+fid = fopen(filename, 'r');
+C = fread(fid, [1000 Inf], 'double');
+fclose(fid);
+A = unique(C);
+sizec = length(A);
+A(1:100);
+
+
+1)	    2435044   iterations;    error = (0.9681144774731365)x10-13
+2) 	      78477   iterations;    error = (0.6918354777951663)x10-12
+3)   	     753979   iterations;    error = (0.1690869666504113)x10-12
+4)     	     242725   iterations;    error = (0.9280909374353996)x10-12  0.3175235786959701
+5)  	    1686904   iterations;    error = (0)                         0.3175235786950421   *
+6)   	     342719   iterations;    error = (0.4766187444715797)x10-12  0.3175235786955187   *
+7)  	    2293491   iterations;    error = (0.9358069874565444)x10-12  0.3175235786959779   *
+8)  	    2141553   iterations;    error = (0.9681144774731365)x10-13  0.3175235786951389   *
+9)    	      78477   iterations;    error = (0.6918354777951663)x10-12  0.3175235786957339   *
+10)          753979   iterations;    error = (0.1690869666504113)x10-12  0.3175235786952111   *
+11)  	     242725   iterations;    error = (0.9280909374353996)x10-12  0.3175235786959701   *
+12) 	    1686904   iterations;    error = (0)                         0.3175235786950421
+final) 	    7539836   iterations;    error = (0)			 0.3175235786950421
+
+
+
+period of X = 5 586 155
+
+r = 3.610209610209611
