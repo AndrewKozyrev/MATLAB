@@ -1,4 +1,4 @@
-cd C:\Users\hitma\OneDrive\ROOT\Personal\Projects\MATLAB;
+cd C:\Users\hitma\OneDrive\ROOT\Files\Job\Projects\MATLAB;
 clc, disp('Never back down.')
 beep off
 set(0, 'DefaultFigureWindowStyle', 'docked')
