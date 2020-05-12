@@ -1,0 +1,23 @@
+a = -0.75;      % parameter
+b = -0.55;      % parameter
+x1 = -0.;       % initial conditions
+x2 = 0.2;       % initial conditions
+M = 10^4;       % number of elements left out for transient
+N = 10^5;       % number of elements in a sequence
+
+object = CCA(a, b, x1, x2, 8, N, M);
+
+object.displayPortrait(4);
+object.drawBorders(4);
+zones = object.groupZones();
+
+% 1 -> 1           1 -> 1
+% 2 -> 4           2 -> 4
+% 3 -> 7           3 -> 7
+% 4 -> 2           4 -> 2
+% 5 -> 5           5 -> 5
+% 6 -> 8           6 -> 8
+% 7 -> 3           7 -> 3
+% 8 -> 6           8 -> 6
+
+% this yields key 14725836
