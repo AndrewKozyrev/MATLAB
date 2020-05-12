@@ -1,9 +1,9 @@
-a = -0.78;      % parameter
+a = -0.75;      % parameter
 b = -0.55;      % parameter
 x1 = -0.2;       % initial conditions
-x2 = 0.2;       % initial conditions
-M = 10^7;       % number of elements left out for transient
-N = 10^8;       % number of elements in a sequence
+x2 = -0.2;       % initial conditions
+M = 10^5;       % number of elements left out for transient
+N = 10^5;       % number of elements in a sequence
 
 object = CCA(a, b, x1, x2, 8, N, M);
 
