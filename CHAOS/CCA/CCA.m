@@ -18,9 +18,9 @@ classdef CCA
     end
     
     methods
-        function self = CCA(in_a, in_b, in_x1, in_x2, in_period)
+        function self = CCA(in_a, in_b, in_x1, in_x2, in_period, varargin)
             %CCA Construct an instance of this class
-            %   Detailed explanation goes here
+            %   Initialize all possible parameters
             self.a = in_a;
             self.b = in_b;
             self.x1 = in_x1;
@@ -28,28 +28,24 @@ classdef CCA
             self.period = in_period;
             self.transient_count = 10^4;
             self.sequence_length = 10^5;
+            if size(varargin, 2) > 0
+                self.sequence_length = varargin{1};
+            end
+            if size(varargin, 2) > 1
+                self.transient_count = varargin{2};
+            end
+            if size(varargin, 2) > 2
+                error("This function doesn't accept so much arguments.");
+            end
         end
         
-        function drawBorders(self, choice)
+        function drawBorders(self, varargin)
             %drawBorders draws grid like borders over chaotic zones on the
             %phase plane
             %   Depending on period, this function iterates through all
             %   chaotic zones and plots borders for each
             dict = self.groupZones();
-            if isa(choice, 'double') && 0 < choice && choice <= self.period
-                temp    = dict(fix(choice));   %in case somebody throws me a floating value:o)
-                left    = min(temp(1,:)); 
-                right   = max(temp(1,:)); 
-                bottom  = min(temp(2,:)); 
-                top     = max(temp(2,:));
-                hold on
-                plot([left left], [bottom top], '--r')
-                plot([right right], [bottom top], '--r')
-                plot([left right], [bottom bottom], '--r')
-                plot([left right], [top top], '--r')
-                ylim([-1 1]);
-                xlim([-1 1]);
-            elseif ( isa(choice, 'char') || isa(choice, 'string') ) && (choice == "all")
+            if size(varargin, 2) == 0
                 for i=1:1:self.period
                     temp    = dict(i);   %in case somebody throws me a floating value:o)
                     left    = min(temp(1,:)); 
@@ -61,14 +57,42 @@ classdef CCA
                     plot([right right], [bottom top], '--r')
                     plot([left right], [bottom bottom], '--r')
                     plot([left right], [top top], '--r')
-                    ylim([-1 1]);
-                    xlim([-1 1]);
                 end
                 ylim([-1 1]);
                 xlim([-1 1]);
                 hold off;
+            elseif size(varargin, 2) == 1 && isa(varargin{1}, 'double') ...
+                            && 0 < varargin{1} && varargin{1} <= self.period
+                temp = dict(fix(varargin{1}));   %in case somebody throws me a floating value:o)
+                left    = min(temp(1,:)); 
+                right   = max(temp(1,:)); 
+                bottom  = min(temp(2,:)); 
+                top     = max(temp(2,:));
+                hold on
+                plot([left left], [bottom top], '--r')
+                plot([right right], [bottom top], '--r')
+                plot([left right], [bottom bottom], '--r')
+                plot([left right], [top top], '--r')
+                ylim([-1 1]);
+                xlim([-1 1]);
+            elseif size(varargin, 2) > 1 && size(varargin, 2) < self.period
+                for i=1:1:size(varargin, 2)
+                    temp = dict(varargin{i});
+                    left    = min(temp(1,:)); 
+                    right   = max(temp(1,:)); 
+                    bottom  = min(temp(2,:)); 
+                    top     = max(temp(2,:));
+                    hold on
+                    plot([left left], [bottom top], '--r')
+                    plot([right right], [bottom top], '--r')
+                    plot([left right], [bottom bottom], '--r')
+                    plot([left right], [top top], '--r')
+                end
+                ylim([-1 1]);
+                xlim([-1 1]);
+                hold off;                
             else
-                error("The argument '%s' is not valid", string(choice));
+                error("The arguments are not valid");
             end
         end
         
@@ -116,14 +140,9 @@ classdef CCA
 
         end
         
-        function displayPortrait(self, choice)
+        function displayPortrait(self, varargin)
             dict = self.groupZones();
-            if isa(choice, 'double') && 0 < choice && choice <= self.period
-                temp = dict(fix(choice));   %in case somebody throws me a floating value:o)
-                plot(temp(1, :), temp(2, :), '.', 'markersize', 3, 'color', 'b');
-                ylim([-1 1]);
-                xlim([-1 1]);
-            elseif ( isa(choice, 'char') || isa(choice, 'string') ) && (choice == "all")
+            if size(varargin, 2) == 0
                 for i=1:1:self.period
                     temp = dict(i);
                     plot(temp(1, :), temp(2, :), '.', 'markersize', 3, 'color', 'b');
@@ -132,8 +151,23 @@ classdef CCA
                 ylim([-1 1]);
                 xlim([-1 1]);
                 hold off;
+            elseif size(varargin, 2) == 1 && isa(varargin{1}, 'double') ...
+                            && 0 < varargin{1} && varargin{1} <= self.period
+                temp = dict(fix(varargin{1}));   %in case somebody throws me a floating value:o)
+                plot(temp(1, :), temp(2, :), '.', 'markersize', 3, 'color', 'b');
+                ylim([-1 1]);
+                xlim([-1 1]);
+            elseif size(varargin, 2) > 1 && size(varargin, 2) < self.period
+                for i=1:1:size(varargin, 2)
+                    temp = dict(varargin{i});
+                    plot(temp(1, :), temp(2, :), '.', 'markersize', 3, 'color', 'b');
+                    hold on;
+                end
+                ylim([-1 1]);
+                xlim([-1 1]);
+                hold off;                
             else
-                error("The argument '%s' is not valid", string(choice));
+                error("The arguments are not valid");
             end
         end
         
@@ -145,7 +179,7 @@ classdef CCA
             dict = self.groupZones();
             [k, dist] = dsearchn([temp(1:end-1); temp(2:end)]',  point);
             if dist > 10^-3
-                warning("The point (%d, %d) does not belong to any zone", x, y);
+                warning("The point (%d, %d) does not belong to any zone", point(1), point(2));
                 zone = -1;
             else
                 temp1 = [temp(1:end-1); temp(2:end)]';
