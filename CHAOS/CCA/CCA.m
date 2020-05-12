@@ -1,4 +1,4 @@
-classdef CCA
+classdef CCA < handle
     %CCA class describes chaotic cyclic attractor
     %   methods: 
     % getSequence() :  returns [x y] sequence
@@ -105,11 +105,15 @@ classdef CCA
             end
         end
         
-        function [x, y] = getSequence(self)
+        function [self, x, y] = getSequence(self, varargin)
             %retrieves a sequence from chaotic system of equations
             
             % declare local variables
-            M = self.transient_count;
+            if size(varargin, 2) == 1 && isa(varargin{1}, 'double')
+                M = varargin{1};
+            else
+                M = self.transient_count;
+            end
             N = self.sequence_length;
             temp_x1 = self.x1;
             temp_x2 = self.x2;
@@ -137,7 +141,9 @@ classdef CCA
                 temp_x2    = x3;
                 x(j)  = x3;
             end
-
+            % update the initial condition variables
+            self.CCA() = x(end-1);
+            self.x2 = x(end);
         end
         
         function displayPortrait(self, varargin)
@@ -175,9 +181,10 @@ classdef CCA
             % This function should return the zone, to which the given
             % point belongs. If the point does not belong to any zone, then
             % just return -1
-            [temp, ~] = self.getSequence();
             dict = self.groupZones();
+            [temp, ~] = self.getSequence(0);
             [k, dist] = dsearchn([temp(1:end-1); temp(2:end)]',  point);
+
             if dist > 10^-3
                 warning("The point (%d, %d) does not belong to any zone", point(1), point(2));
                 zone = -1;
