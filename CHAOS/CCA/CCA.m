@@ -137,11 +137,28 @@ classdef CCA
             end
         end
         
-        function zone = indentify(self, x, y)
+        function zone = identify(self, point)
             % This function should return the zone, to which the given
             % point belongs. If the point does not belong to any zone, then
             % just return -1
+            [temp, ~] = self.getSequence();
+            dict = self.groupZones();
+            [k, dist] = dsearchn([temp(1:end-1); temp(2:end)]',  point);
+            if dist > 10^-3
+                warning("The point (%d, %d) does not belong to any zone", x, y);
+                zone = -1;
+            else
+                temp1 = [temp(1:end-1); temp(2:end)]';
+                p_exact = temp1(k, :);
+                for i=1:1:self.period                       %iterate through all zones, # of zones = period
+                    if any(ismember(dict(i)', p_exact, 'rows'))
+                        zone = i;
+                    end
+                end
+            end
         end
+        
     end
+    
 end
 
