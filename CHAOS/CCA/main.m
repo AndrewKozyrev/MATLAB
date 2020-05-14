@@ -1,23 +1,33 @@
+cd 'C:\Users\hitma\OneDrive\ROOT\Files\Job\Projects\MATLAB\CHAOS\CCA'
+
 a = -0.75;      % parameter
 b = -0.55;      % parameter
 x1 = -0.2;       % initial conditions
-x2 = -0.2;       % initial conditions
-M = 10^5;       % number of elements left out for transient
-N = 10^5;       % number of elements in a sequence
+x2 = 0.2;       % initial conditions
+M = 0;       % number of elements left out for transient
+N = 10^6;       % number of elements in a sequence
 
 object = CCA(a, b, x1, x2, 8, N, M);
 
+%%
 object.displayPortrait();
 object.drawBorders();
-zones = object.groupZones();
 
-% 1 -> 1           1 -> 1
-% 2 -> 4           2 -> 4
-% 3 -> 7           3 -> 7
-% 4 -> 2           4 -> 2
-% 5 -> 5           5 -> 5
-% 6 -> 8           6 -> 8
-% 7 -> 3           7 -> 3
-% 8 -> 6           8 -> 6
+%%
+% 1 -> 4           0 -> 5
+% 2 -> 7           1 -> 8
+% 3 -> 2           2 -> 3
+% 4 -> 5           3 -> 6
+% 5 -> 0           4 -> 1
+% 6 -> 3           5 -> 4
+% 7 -> 6           6 -> 7
+% 8 -> 1           7 -> 2
 
+% 58361472
 % this yields key 14725836
+
+
+%% 
+for i =1:1:1000
+    object.getSequence(true);
+end
