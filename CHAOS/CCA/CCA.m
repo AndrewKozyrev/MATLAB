@@ -80,7 +80,7 @@ classdef CCA < handle
                 ylim([-1 1]);
                 xlim([-1 1]);
                 hold off
-            elseif size(varargin, 2) > 1 && size(varargin, 2) < self.period
+            elseif size(varargin, 2) > 1 && size(varargin, 2) <= self.period
                 for i=1:1:size(varargin, 2)
                     temp = dict(varargin{i});
                     left    = min(temp(1,:)); 
@@ -191,7 +191,7 @@ classdef CCA < handle
                 ylim([-1 1]);
                 xlim([-1 1]);
                 hold off
-            elseif size(varargin, 2) > 1 && size(varargin, 2) < self.period
+            elseif size(varargin, 2) > 1 && size(varargin, 2) <= self.period
                 for i=1:1:size(varargin, 2)
                     temp = dict(varargin{i});
                     plot(temp(1, :), temp(2, :), '.', 'markersize', 3, 'color', 'b');
@@ -222,6 +222,7 @@ classdef CCA < handle
                 for i=1:1:self.period                       %iterate through all zones, # of zones = period
                     if any(ismember(dict(i)', p_exact, 'rows'))
                         zone = i;
+                        break
                     end
                 end
             end
@@ -229,27 +230,19 @@ classdef CCA < handle
         
         function [key, start_of_hopping] = getOrder(self, varargin)
             load('zone_clusters.mat', 'data');
-            temp_x1 = self.x1; 
-            temp_x2 = self.x2;
             treshold_1 = 10^-6; treshold_2 = 10^-3;
-            if size(varargin, 2) > 0 && isa(varargin{1}, 'double')
-                temp_x1 = varargin{1}(1);
-                temp_x2 = varargin{1}(2);
+            if size(varargin, 2) > 0 && isDataArray(varargin{1})
+                self.x1 = varargin{1}(1);
+                self.x2 = varargin{1}(2);
             end
             if size(varargin, 2) > 2 && isa(varargin{2}, 'double') && isa(varargin{3}, 'double')
-                treshold_1 = varargin{2};
-                treshold_2 = varargin{3};
+                treshold_1 = varargin{2};       %precision of allignment with the first zone
+                treshold_2 = varargin{3};       %precision of belongs to a zone
             end
-            temp_a = self.a;
-            temp_b = self.b;
-            y = temp_a*temp_x2 + temp_b*temp_x1;
             
             % This loop is meant to allign the pivot to CZ0
             for i=1:10^7
-                temp_x3 = sin( pi*y );
-                temp_x1 = temp_x2;
-                temp_x2 = temp_x3;
-                y = temp_a*temp_x2 + temp_b*temp_x1;
+                [temp_x1, temp_x2] = self.transient(1, true);
                 [~, dist] = dsearchn(data(1)',  [temp_x1 temp_x2]);     % allign the start of cycle to the CZ0
                 if dist <= treshold_1
                     start_of_hopping = [temp_x1 temp_x2];           % this point belongs to CZ0
@@ -259,10 +252,7 @@ classdef CCA < handle
             end
             
             for i=1:1:8
-                y = temp_a*temp_x2 + temp_b*temp_x1;
-                temp_x3 = sin( pi*y );
-                temp_x1 = temp_x2;
-                temp_x2 = temp_x3;
+                [temp_x1, temp_x2] = self.transient(1, true);
                 % this loop checks where the next point belongs, i.e. the
                 % corresponding chaotic zone CZ(k)
                 for k=1:1:self.period                       %iterate through all zones, # of zones = period
@@ -275,11 +265,22 @@ classdef CCA < handle
             end
         end
         
-        function encode(~, varargin)
+        function encode(self, varargin)
             %encode() encodes a message with this non-linear model
             %   encode(message) takes message and returns cypther
-            decimal_input = bi2de(varargin{1});
-            base_transform = dec2base(decimal_input, 8);
+            if size(varargin, 2) >= 1 && ( class(varargin{1}) == "string" || class(varargin{1}) == "char")
+                binary_input = num2str(varargin{1});
+                decimal_input = bin2dec(binary_input);
+            else
+                error("Check your input");
+            end
+            k = ceil(   log( 2^length(binary_input) )/log( self.period )   );
+            base_transform = dec2base(decimal_input, self.period);
+            
+            %теперь нужно определить зону первой точки, а также порядок
+            %следования зон
+            [key, x0] = self.getOrder(0.001, 0.01);
+            
         end
         
     end
