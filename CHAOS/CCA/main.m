@@ -26,9 +26,10 @@ object.drawBorders(5, 8, 3, 6, 1, 4, 7, 2);
 % 58361472
 % this yields key 14725836
 
+for i = 1:1:7
+    decimal(i) = randi([0 255], 1);
+    binary{i} = dec2bin(decimal(i), 8);
+    [octalresult{i}, decimalresult{i}, binaryresult{i}] = object.encode(binary{1}, i + 10);
+end
 
-%% 7 -> 8 -> 1 -> 2 -> 3 -> 4 -> 
-p = [object.x1 object.x2];
-z = object.identify(p);
-[p2(1), p2(2)] = object.transient(5, false);
-z2 = object.identify(p2);
+mytable = [string(binary(:)) decimal' string(octal) string(octalresult(:)) string(decimalresult(:))]
