@@ -311,7 +311,43 @@ classdef CCA < handle
             cypher_b = dec2bin(cypher_d, length(binary_input));
         end
         
+        function [msg_octal, msg_decimal, msg_binary] = decode(self, varargin)
+            %decode(cypher, k) decodes a binary message
+            % decodes a message using initial zone position k and cypher
+            if size(varargin, 2) >= 1 && ( class(varargin{1}) == "string" || class(varargin{1}) == "char")
+                binary_input = num2str(varargin{1});        %the message absolutely has to be binary
+                decimal_input = bin2dec(binary_input);
+            else
+                error("Check your input");
+            end
+            
+            k = ceil(   log( 2^length(binary_input) )/log( self.period )   );
+            base_transform = dec2base(decimal_input, self.period, k);
+                        %теперь нужно определить порядок следования зон
+            [key, ~] = self.getOrder(0.001, 0.01);
+            key_order = key - '0';  % get index of zones into an array
+            digits = base_transform - '0';  %get individual digits of the number
+            
+            if size(varargin, 2) >= 2 && isa(varargin{2}, 'double')
+                offset = varargin{2};  %we start with zone of offset
+            else
+                offset = 1;     %default start of coding for the first number
+            end
+            
+            msg_octal = '';      %allocate memmory for enough cypher digits
+            % The question is what zone I will wind up on after I iterate
+            % the number of times indicated by each individual digit
+            for i=1:1:length(digits)
+                msg_octal = append(msg_octal, num2str(  key_order(digits(i)+1)  ));
+            end
+            
+            msg_decimal = base2dec(msg_octal, self.period);
+            msg_binary = dec2bin(msg_decimal, length(binary_input));
+        end
+        
+%% end of methods implementation        
         
     end
+    
+    
 end
-
