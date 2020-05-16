@@ -246,26 +246,26 @@ classdef CCA < handle
                 [~, dist] = dsearchn(data(1)',  [temp_x1 temp_x2]);     % allign the start of cycle to the CZ0
                 if dist <= treshold_1
                     start_of_hopping = [temp_x1 temp_x2];           % this point belongs to CZ0
-                    key = string(1);
+                    key = num2str(0);
                     break
                 end
             end
             
-            for i=1:1:8
-                [temp_x1, temp_x2] = self.transient(1, true);
+            for i=1:1:7
+                [temp_x1, temp_x2] = self.transient(i, false);
                 % this loop checks where the next point belongs, i.e. the
                 % corresponding chaotic zone CZ(k)
                 for k=1:1:self.period                       %iterate through all zones, # of zones = period
                     [~, dist] = dsearchn(data(k)',  [temp_x1 temp_x2]);
                     if dist <= treshold_2
-                        key = key + string(k);          %append the next chaotic zone index
+                        key = append(key, num2str(k-1));          %append the next chaotic zone index
                         break
                     end
                 end
             end
         end
         
-        function encode(self, varargin)
+        function [cypher, cypher_d, cypher_b] = encode(self, varargin)
             %encode() encodes a message with this non-linear model
             %   encode(message) takes message and returns cypther
             if size(varargin, 2) >= 1 && ( class(varargin{1}) == "string" || class(varargin{1}) == "char")
@@ -275,13 +275,42 @@ classdef CCA < handle
                 error("Check your input");
             end
             k = ceil(   log( 2^length(binary_input) )/log( self.period )   );
-            base_transform = dec2base(decimal_input, self.period);
+            base_transform = dec2base(decimal_input, self.period, k);
             
-            %теперь нужно определить зону первой точки, а также порядок
-            %следования зон
-            [key, x0] = self.getOrder(0.001, 0.01);
+            %теперь нужно определить порядок следования зон
+            [key, ~] = self.getOrder(0.001, 0.01);
+            key_order = key - '0';  % get index of zones into an array
+            digits = base_transform - '0';  %get individual digits of the number
             
+            if size(varargin, 2) >= 2 && isa(varargin{2}, 'double')
+                offset = varargin{2};  %we start with zone of offset
+            else
+                offset = 1;     %default start of coding for the first number
+            end
+            % The question is: how many iterations it will take to reach
+            % from zone of offset to zone of each individual digit
+            cypher = nan(1, length(digits));      %allocate memmory for enough cypher digits
+            for s=1:1:length(digits)
+                next_zone = mod(offset, length(key_order));
+                for i=0:1:length(key_order)
+                    if next_zone == 0
+                        next_zone = 1;
+                    end
+                    if key_order(next_zone) == digits(s)
+                        cypher(s) = mod(i, length(key_order));
+                        break
+                    end
+                    next_zone = mod(next_zone, length(key_order));
+                    next_zone = next_zone + 1;
+                end
+            end
+            temp = num2str(cypher);
+            temp = temp(temp ~= ' ');
+            cypher = temp;
+            cypher_d = base2dec(temp, self.period);
+            cypher_b = dec2bin(cypher_d, length(binary_input));
         end
+        
         
     end
 end
