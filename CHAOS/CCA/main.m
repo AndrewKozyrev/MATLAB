@@ -25,11 +25,23 @@ object.drawBorders(5, 8, 3, 6, 1, 4, 7, 2);
 
 % 58361472
 % this yields key 14725836
-
-for i = 1:1:7
-    decimal(i) = randi([0 255], 1);
-    binary{i} = dec2bin(decimal(i), 8);
-    [octalresult{i}, decimalresult{i}, binaryresult{i}] = object.encode(binary{1}, i + 10);
+k = 8;
+for i = 1:1:(2^k-1)
+    in_d(i) = i;
+    in_b{i} = dec2bin(in_d(i), k);
+    in_oct{i} = dec2base(in_d(i), 8);
+    [e_oct{i}, e_dec{i}] = object.encode(in_d(i), i);
+    [d_oct{i}, d_dec{i}] = object.decode(e_oct{i}, i);
+    out_b{i} = dec2bin(str2double(d_dec{i}), k);
 end
+in_b = in_b';
+in_d = in_d';
+in_oct = in_oct';
+e_oct = e_oct';
+e_dec = e_dec';
+d_oct = d_oct';
+d_dec = d_dec';
+out_b = out_b';
+T = table(in_b, in_d, in_oct, e_oct, e_dec, d_oct, d_dec, out_b)
 
-mytable = [string(binary(:)) decimal' string(octal) string(octalresult(:)) string(decimalresult(:))]
+
