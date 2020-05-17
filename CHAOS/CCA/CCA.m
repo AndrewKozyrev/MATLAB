@@ -265,84 +265,85 @@ classdef CCA < handle
             end
         end
         
-        function [cypher, cypher_d, cypher_b] = encode(self, varargin)
-            %encode() encodes a message with this non-linear model
-            %   encode(message) takes message and returns cypther
-            if size(varargin, 2) >= 1 && ( class(varargin{1}) == "string" || class(varargin{1}) == "char")
-                binary_input = num2str(varargin{1});
-                decimal_input = bin2dec(binary_input);
+        function [cypher, cypher_decimal] = encode(self, msg, varargin)
+            %encode() encodes a decimal number with this non-linear model
+            %   encode(message) takes decimal number and returns cypher
+            if ( class(msg) == "string" || class(msg) == "char" || class(msg) == "double")
+                decimal_input = num2str(msg);
             else
                 error("Check your input");
             end
-            k = ceil(   log( 2^length(binary_input) )/log( self.period )   );
-            base_transform = dec2base(decimal_input, self.period, k);
+            base_transform = dec2base(str2double(decimal_input), self.period);
             
             %теперь нужно определить порядок следования зон
-            [key, ~] = self.getOrder(0.001, 0.01);
+            [key, ~] = self.getOrder(0.1, 0.1);
             key_order = key - '0';  % get index of zones into an array
             digits = base_transform - '0';  %get individual digits of the number
             
-            if size(varargin, 2) >= 2 && isa(varargin{2}, 'double')
-                offset = varargin{2};  %we start with zone of offset
+            if size(varargin, 2) > 0 && isa(varargin{1}, 'double')
+                offset = varargin{1};  %we start with zone of offset
             else
                 offset = 1;     %default start of coding for the first number
             end
             % The question is: how many iterations it will take to reach
             % from zone of offset to zone of each individual digit
-            cypher = nan(1, length(digits));      %allocate memmory for enough cypher digits
+            cypher = '';      %allocate memmory for enough cypher digits
             for s=1:1:length(digits)
                 next_zone = mod(offset, length(key_order));
+                if next_zone == 0
+                    next_zone = length(key_order);
+                end
                 for i=0:1:length(key_order)
                     if next_zone == 0
                         next_zone = 1;
                     end
                     if key_order(next_zone) == digits(s)
-                        cypher(s) = mod(i, length(key_order));
+                        cypher = append( cypher, num2str(mod(i, length(key_order))) );
                         break
                     end
                     next_zone = mod(next_zone, length(key_order));
                     next_zone = next_zone + 1;
                 end
             end
-            temp = num2str(cypher);
-            temp = temp(temp ~= ' ');
-            cypher = temp;
-            cypher_d = base2dec(temp, self.period);
-            cypher_b = dec2bin(cypher_d, length(binary_input));
+            cypher_decimal = num2str(base2dec(cypher, self.period));
+            if size(varargin, 2) > 1 && isa(varargin{2}, 'char') && varargin{2} == 'v'
+                fprintf("Encoded message base_%d   = %s\nEncoded message base_10  = %s\n", self.period, cypher, cypher_decimal);            
+            end
         end
         
-        function [msg_octal, msg_decimal, msg_binary] = decode(self, varargin)
-            %decode(cypher, k) decodes a binary message
+        function [msg, msg_decimal] = decode(self, cypher, varargin)
+            %decode(cypher, k) decodes an encrypted message
             % decodes a message using initial zone position k and cypher
-            if size(varargin, 2) >= 1 && ( class(varargin{1}) == "string" || class(varargin{1}) == "char")
-                binary_input = num2str(varargin{1});        %the message absolutely has to be binary
-                decimal_input = bin2dec(binary_input);
+            if ( class(cypher) == "string" || class(cypher) == "char" || class(cypher) == "double")
+                base_transform = num2str(cypher);
             else
                 error("Check your input");
             end
-            
-            k = ceil(   log( 2^length(binary_input) )/log( self.period )   );
-            base_transform = dec2base(decimal_input, self.period, k);
                         %теперь нужно определить порядок следования зон
-            [key, ~] = self.getOrder(0.001, 0.01);
+            [key, ~] = self.getOrder(0.1, 0.1);
             key_order = key - '0';  % get index of zones into an array
             digits = base_transform - '0';  %get individual digits of the number
             
-            if size(varargin, 2) >= 2 && isa(varargin{2}, 'double')
-                offset = varargin{2};  %we start with zone of offset
+            if size(varargin, 2) >= 1 && isa(varargin{1}, 'double')
+                offset = varargin{1};  %we start with zone of offset
             else
                 offset = 1;     %default start of coding for the first number
             end
             
-            msg_octal = '';      %allocate memmory for enough cypher digits
-            % The question is what zone I will wind up on after I iterate
+            msg = '';      %allocate memmory for enough cypher digits
+            % The question is what zone I will wind up at after I iterate
             % the number of times indicated by each individual digit
             for i=1:1:length(digits)
-                msg_octal = append(msg_octal, num2str(  key_order(digits(i)+1)  ));
+                dest_zone = mod(offset + digits(i), length(key_order));
+                if dest_zone == 0
+                    dest_zone = length(key_order);
+                end
+                msg = append(msg, num2str(  key_order(dest_zone)  ));
             end
-            
-            msg_decimal = base2dec(msg_octal, self.period);
-            msg_binary = dec2bin(msg_decimal, length(binary_input));
+            msg_decimal = num2str( base2dec(msg, self.period) );
+            if size(varargin, 2) > 1 && isa(varargin{2}, 'char') && varargin{2} == 'v'
+                fprintf("Decoded message base_%d   = %s\nDecoded message base_10  = %s\n", self.period, msg, msg_decimal);
+            end
         end
         
 %% end of methods implementation        
