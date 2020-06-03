@@ -45,3 +45,18 @@ xlabel('Frequency')
 ylabel('Power')
 
 
+
+%%
+tic
+done = false;
+k = 1;
+while ~done %&& k < 10^4
+    k = k+1;
+    s = randi([0 1], 1, 100);
+    tier3 = TestChaos.Golomb(s);
+    if sum(tier3) == 3
+        done = true;
+    end
+end
+toc
+disp("done");
