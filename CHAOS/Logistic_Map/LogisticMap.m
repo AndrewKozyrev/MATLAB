@@ -17,23 +17,6 @@ classdef LogisticMap
             self.transient_count = M;
         end
         
-        function x_bin = binary(self, seq_x)
-            %binary translates real-valued logistic map sequence into
-            %binary sequence
-            %   x_t is treshold value
-            N = length(seq_x);
-            x_t     = mean(seq_x);
-            x_bin   = nan(1, N);
-
-            for i=1:1:N
-                if seq_x(i) < x_t
-                    x_bin(i) = 0;
-                else
-                    x_bin(i) = 1;
-                end
-            end
-        end
-        
         function xseq = getSequence(self, N, varargin)
             %logistic_map generates orbits
             % equation for mapping x_n+1 = r*x_n*(1-x_n)
@@ -88,9 +71,37 @@ classdef LogisticMap
         
         function cypher = encode(self, message)
             N = length(message);
-            xseq = self.getSequence(N);
+            x1 = self.getSequence(1, rand, self.mu_0);
+            xseq = self.getSequence(N, x1);
             bin_seq = self.binary(xseq);
             cypher = xor(bin_seq, message);
+        end
+        
+        function message = decode(self, cypher)
+            N = length(cypher);
+            x1 = self.getSequence(1, rand, self.mu_0);
+            xseq = self.getSequence(N, x1);
+            bin_seq = self.binary(xseq);
+            message = xor(bin_seq, cypher);
+        end
+    end
+    
+    methods(Static)
+        function x_bin = binary(seq_x)
+            %binary translates real-valued logistic map sequence into
+            %binary sequence
+            %   x_t is treshold value
+            N = length(seq_x);
+            x_t     = mean(seq_x);
+            x_bin   = nan(1, N);
+
+            for i=1:1:N
+                if seq_x(i) < x_t
+                    x_bin(i) = 0;
+                else
+                    x_bin(i) = 1;
+                end
+            end
         end
     end
 end
