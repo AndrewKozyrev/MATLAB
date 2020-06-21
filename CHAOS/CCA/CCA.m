@@ -48,7 +48,7 @@ classdef CCA < handle
             %phase plane
             %   Depending on period, this function iterates through all
             %   chaotic zones and plots borders for each
-            dict = self.groupZones(true);
+            dict = self.groupZones(false);
             if size(varargin, 2) == 0
                 for i=1:1:self.period
                     temp    = dict(i);   %in case somebody throws me a floating value:o)
@@ -152,7 +152,7 @@ classdef CCA < handle
             end
         end
         
-        function [new_x1, new_x2] = transient(self, M, varargin)
+        function x_next = transient(self, M, varargin)
             % local variables again
             temp_x1 = self.x1;
             temp_x2 = self.x2;
@@ -167,6 +167,7 @@ classdef CCA < handle
             end
             new_x1 = temp_x1;
             new_x2 = temp_x2;
+            x_next = [new_x1 new_x2];
             if size(varargin, 2) == 1 && isa(varargin{1}, 'logical') && varargin{1}
                 self.x1 = new_x1;
                 self.x2 = new_x2;
@@ -179,7 +180,7 @@ classdef CCA < handle
                 error("Give me marker size with quotes.");
             end
             m = str2num(m);
-            dict = self.groupZones(true);
+            dict = self.groupZones(false);
             %varargin is taking the # of zone to plot in case your are
             %wondering what's happening
             %if 1 argument, plot 1 zone
@@ -225,7 +226,7 @@ classdef CCA < handle
             % point belongs. If the point does not belong to any zone, then
             % just return -1
             dict = self.groupZones(false);              % don't update initial conditions
-            [temp, ~] = self.getSequence(true);         % update initial conditions
+            [temp, ~] = self.getSequence(false);         % don't update initial conditions
             [k, dist] = dsearchn([temp(1:end-1); temp(2:end)]',  point);
 
             if dist > 10^-3
@@ -257,21 +258,21 @@ classdef CCA < handle
             
             % This loop is meant to allign the pivot to CZ0
             for i=1:10^7
-                [temp_x1, temp_x2] = self.transient(1, true);
-                [~, dist] = dsearchn(data(1)',  [temp_x1 temp_x2]);     % allign the start of cycle to the CZ0
+                x_next = self.transient(1, true);
+                [~, dist] = dsearchn(data(1)',  x_next);     % allign the start of cycle to the CZ0
                 if dist <= treshold_1
-                    start_of_hopping = [temp_x1 temp_x2];           % this point belongs to CZ0
+                    start_of_hopping = x_next;           % this point belongs to CZ0
                     key = num2str(0);
                     break
                 end
             end
             
             for i=1:1:7
-                [temp_x1, temp_x2] = self.transient(i, false);
+                x_next = self.transient(i, false);
                 % this loop checks where the next point belongs, i.e. the
                 % corresponding chaotic zone CZ(k)
                 for k=1:1:self.period                       %iterate through all zones, # of zones = period
-                    [~, dist] = dsearchn(data(k)',  [temp_x1 temp_x2]);
+                    [~, dist] = dsearchn(data(k)',  x_next);
                     if dist <= treshold_2
                         key = append(key, num2str(k-1));          %append the next chaotic zone index
                         break
@@ -280,15 +281,17 @@ classdef CCA < handle
             end
         end
         
-        function [cypher, cypher_decimal] = encode(self, msg, varargin)
+        function [cypher_binary, cypher] = encode(self, msg, varargin)
             %encode() encodes a decimal number with this non-linear model
-            %   encode(message) takes decimal number and returns cypher
+            %encode(message) takes binary number and returns binary cypher
             if ( class(msg) == "string" || class(msg) == "char" || class(msg) == "double")
-                decimal_input = num2str(msg);
+                binary_input = num2str(msg);
             else
                 error("Check your input");
             end
-            base_transform = dec2base(str2double(decimal_input), self.period);
+            L = length(binary_input);
+            decimal_input = bin2dec(binary_input);
+            base_transform = dec2base(decimal_input, self.period);
             
             %теперь нужно определить порядок следования зон
             [key, ~] = self.getOrder(0.1, 0.1);
@@ -321,16 +324,22 @@ classdef CCA < handle
                 end
             end
             cypher_decimal = num2str(base2dec(cypher, self.period));
+            temp = str2num(cypher_decimal);
+            cypher_binary = dec2bin(temp, L + 1);
             if size(varargin, 2) > 1 && isa(varargin{2}, 'char') && varargin{2} == 'v'
-                fprintf("Encoded message base_%d   = %s\nEncoded message base_10  = %s\n", self.period, cypher, cypher_decimal);            
+                fprintf("Encoded message base_%d   = %s\nEncoded message base_2  = %s\n", self.period, cypher, cypher_binary);            
             end
         end
         
-        function [msg, msg_decimal] = decode(self, cypher, varargin)
+        function [msg_bin, msg] = decode(self, cypher, varargin)
             %decode(cypher, k) decodes an encrypted message
             % decodes a message using initial zone position k and cypher
             if ( class(cypher) == "string" || class(cypher) == "char" || class(cypher) == "double")
-                base_transform = num2str(cypher);
+                bincypher = num2str(cypher);
+                temp = bin2dec(bincypher);
+                temp = dec2base(temp, self.period);
+                L = length(bincypher);
+                base_transform = temp;
             else
                 error("Check your input");
             end
@@ -355,9 +364,10 @@ classdef CCA < handle
                 end
                 msg = append(msg, num2str(  key_order(dest_zone)  ));
             end
-            msg_decimal = num2str( base2dec(msg, self.period) );
+            msg_decimal = base2dec(msg, self.period);
+            msg_bin = dec2bin(msg_decimal, L - 1);
             if size(varargin, 2) > 1 && isa(varargin{2}, 'char') && varargin{2} == 'v'
-                fprintf("Decoded message base_%d   = %s\nDecoded message base_10  = %s\n", self.period, msg, msg_decimal);
+                fprintf("Decoded message base_%d   = %s\nDecoded message base_2  = %s\n", self.period, msg, msg_bin);
             end
         end
         
