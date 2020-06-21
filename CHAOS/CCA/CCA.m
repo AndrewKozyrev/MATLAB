@@ -173,12 +173,23 @@ classdef CCA < handle
             end
         end
         
-        function displayPortrait(self, varargin)
+        function displayPortrait(self, m, varargin)
+            % m is for 'marker size' by default, it should be 3.
+            if ~isa(m, "string") && ~isa(m, "char")
+                error("Give me marker size with quotes.");
+            end
+            m = str2num(m);
             dict = self.groupZones(true);
+            %varargin is taking the # of zone to plot in case your are
+            %wondering what's happening
+            %if 1 argument, plot 1 zone
+            %if 2 or more arguments, plot in a loop
             if size(varargin, 2) == 0
                 for i=1:1:self.period
                     temp = dict(i);
-                    plot(temp(1, :), temp(2, :), '.', 'markersize', 3, 'color', 'b');
+                    plot(temp(1, :), temp(2, :), '.', 'markersize', m, 'color', 'b');
+                    xlabel("x_n"); ylabel("x_n_+_1"); title("\alpha = " + self.a + ", \beta = " + self.b);
+                    grid on, box off, grid minor
                     hold on;
                 end
                 ylim([-1 1]);
@@ -186,15 +197,19 @@ classdef CCA < handle
                 hold off;
             elseif size(varargin, 2) == 1 && isa(varargin{1}, 'double') ...
                             && 0 < varargin{1} && varargin{1} <= self.period
-                temp = dict(fix(varargin{1}));   %in case somebody throws me a floating value:o)
-                plot(temp(1, :), temp(2, :), '.', 'markersize', 3, 'color', 'b');
+                temp = dict(varargin{1});           %plot the zone, contained in argument 1
+                plot(temp(1, :), temp(2, :), '.', 'markersize', m, 'color', 'b');
+                xlabel("x_n"); ylabel("x_n_+_1"); title("\alpha = " + self.a + ", \beta = " + self.b);
+                grid on, box off, grid minor
                 ylim([-1 1]);
                 xlim([-1 1]);
                 hold off
             elseif size(varargin, 2) > 1 && size(varargin, 2) <= self.period
-                for i=1:1:size(varargin, 2)
+                for i=1:1:size(varargin, 2)                 %plot zones in arguments
                     temp = dict(varargin{i});
-                    plot(temp(1, :), temp(2, :), '.', 'markersize', 3, 'color', 'b');
+                    plot(temp(1, :), temp(2, :), '.', 'markersize', m, 'color', 'b');
+                    xlabel("x_n"); ylabel("x_n_+_1"); title("\alpha = " + self.a + ", \beta = " + self.b);
+                    grid on, box off, grid minor
                     hold on;
                 end
                 ylim([-1 1]);
@@ -209,8 +224,8 @@ classdef CCA < handle
             % This function should return the zone, to which the given
             % point belongs. If the point does not belong to any zone, then
             % just return -1
-            dict = self.groupZones(false);      % don't update initial conditions
-            [temp, ~] = self.getSequence(true);      %update initial conditions
+            dict = self.groupZones(false);              % don't update initial conditions
+            [temp, ~] = self.getSequence(true);         % update initial conditions
             [k, dist] = dsearchn([temp(1:end-1); temp(2:end)]',  point);
 
             if dist > 10^-3
@@ -219,7 +234,7 @@ classdef CCA < handle
             else
                 temp1 = [temp(1:end-1); temp(2:end)]';
                 p_exact = temp1(k, :);
-                for i=1:1:self.period                       %iterate through all zones, # of zones = period
+                for i=1:1:self.period                       % iterate through all zones, # of zones = period
                     if any(ismember(dict(i)', p_exact, 'rows'))
                         zone = i;
                         break

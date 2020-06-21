@@ -69,20 +69,20 @@ classdef LogisticMap
             
         end
         
-        function cypher = encode(self, message)
+        function e = cypher(self, m)
             N = length(message);
             x1 = self.getSequence(1, rand, self.mu_0);
             xseq = self.getSequence(N, x1);
             bin_seq = self.binary(xseq);
-            cypher = xor(bin_seq, message);
+            e = double(xor(bin_seq, m));
         end
         
-        function message = decode(self, cypher)
-            N = length(cypher);
+        function d = decypher(self, e)
+            N = length(e);
             x1 = self.getSequence(1, rand, self.mu_0);
             xseq = self.getSequence(N, x1);
             bin_seq = self.binary(xseq);
-            message = xor(bin_seq, cypher);
+            d = double(xor(bin_seq, e));
         end
     end
     
