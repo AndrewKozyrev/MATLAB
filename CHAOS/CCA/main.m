@@ -15,13 +15,17 @@ object.drawBorders(8);
 
 % this yields key 14725836
 %% Encoding example
-L = 8;
+L = 9;
 for i = 1:1:17
-    in{i} = join(string(randi([0 1], 1, L)), '');
-    out{i} = object.encode(in{i}, i);
+    in{i} = num2str(join(string(randi([0 1], 1, L)), ''));
+    temp = bin2dec(in{i});
+    in_oct{i} = dec2base(temp, 8); 
+    [out{i}, out_oct{i}] = object.decode(in{i}, i);
 end
 in = in';
+in_oct = in_oct';
+out_oct = out_oct';
 out = out';
-T = table(in, out)
+T = table(in, in_oct, out_oct, out)
 
 

@@ -240,9 +240,16 @@ classdef Dyadic
             end
         end
         
-        function y = getBinary(x, n)
+        function y = getBinary(x, n, varargin)
             
-            x = sym(x);
+            if size(varargin, 2) > 0 && varargin{1} == "approximate"
+                old_digits = digits(varargin{2});
+                x = vpa(x);
+            else
+                old_digits = digits;
+                x = sym(x);
+            end
+            
             y = '';
             temp = x;
             t = '1';
@@ -262,7 +269,7 @@ classdef Dyadic
             end
             
             y = y - '0';
-            
+            digits(old_digits);
         end
         
         function e = cypher(m, x, l)

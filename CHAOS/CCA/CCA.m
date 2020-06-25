@@ -289,12 +289,14 @@ classdef CCA < handle
             else
                 error("Check your input");
             end
-            L = length(binary_input);
+            L = self.optimizeLength(length(binary_input));
             decimal_input = bin2dec(binary_input);
             base_transform = dec2base(decimal_input, self.period);
             
             %теперь нужно определить порядок следования зон
-            [key, ~] = self.getOrder(0.1, 0.1);
+            %я не знаю как определить порядок следования зон
+            %[key, ~] = self.getOrder(0.1, 0.1);
+            key = '03614725';
             key_order = key - '0';  % get index of zones into an array
             digits = base_transform - '0';  %get individual digits of the number
             
@@ -325,7 +327,7 @@ classdef CCA < handle
             end
             cypher_decimal = num2str(base2dec(cypher, self.period));
             temp = str2num(cypher_decimal);
-            cypher_binary = dec2bin(temp, L + 1);
+            cypher_binary = dec2bin(temp, L);
             if size(varargin, 2) > 1 && isa(varargin{2}, 'char') && varargin{2} == 'v'
                 fprintf("Encoded message base_%d   = %s\nEncoded message base_2  = %s\n", self.period, cypher, cypher_binary);            
             end
@@ -365,12 +367,17 @@ classdef CCA < handle
                 msg = append(msg, num2str(  key_order(dest_zone)  ));
             end
             msg_decimal = base2dec(msg, self.period);
-            msg_bin = dec2bin(msg_decimal, L - 1);
+            msg_bin = dec2bin(msg_decimal, L);
             if size(varargin, 2) > 1 && isa(varargin{2}, 'char') && varargin{2} == 'v'
                 fprintf("Decoded message base_%d   = %s\nDecoded message base_2  = %s\n", self.period, msg, msg_bin);
             end
         end
         
+        function L_new = optimizeLength(self, L)
+            % determine optimal length of message
+            N = self.period;
+            L_new = ceil(log2(N^ceil( log10(2^L-1)/log10(N) )-1));
+        end
 %% end of methods implementation        
         
     end

@@ -12,7 +12,7 @@ classdef TestChaos
             %   Does nothing at the moment
         end
         
-        function [res, h, p] = chiSquare(s)
+        function [res, h, p] = chiSquare(s, varargin)
             %chiSquare gets pearson coeffs for all runs of sequence
             %   Give me a binary sequence, and I will run chi-square test for all
             %   possible partitions of your sequence. That is I will make
@@ -60,34 +60,49 @@ classdef TestChaos
                 end
                 p(n)    = chi2cdf(c, K-1, 'upper');
             end
+            
+            if size(varargin, 2) > 0 && varargin{1} == "plot"
+                handle = plot(p, '.', 'markersize', 20);
+                handle.LineStyle = '--';
+                xlabel('groups'); ylabel('P_v_a_l_u_e');
+            end
+            
             res = 1-sum(h)/M;
         end
         
-        function [power, frequency] = PSD(signal, varargin)
-            % This functions computes power spectral density
+        function result = fourierTest(signal, varargin)
+            % This functions implements graphical spectral test
             %   Detailed explanation is not ready yet
 
-            N = length(signal);
-
-            if ~isempty(varargin)
-                if length(varargin) > 1 && varargin{2} == "one-sided"
-                    y = fft(signal);
-                    y = y(1:N/2+1);
-                    frequency = varargin{1}/2*linspace(0, 1, length(y));
-                    % calculating power
-                    power = ( abs(y) ).^2 / N;
-                    power(2:end-1) = 2 * power(2:end-1);
+            n = length(signal);
+            s = nan(1, n);
+            for i=1:1:n
+                if signal(i) == 1
+                    s(i) = 1;
+                elseif signal(i) == 0
+                    s(i) = -1;
                 else
-                    y = fft(signal);
-                    frequency = varargin{1}*linspace(0, 1, N);
-                    power = ( abs( y ) ).^2 / N;
+                    error("You gave me invalid signal.");
                 end
-            else
-                y = fft(signal);
-                frequency = N*linspace(0, 1, N);
-                % calculating power
-                power = ( abs(y) ).^2 / N;
             end
+                    
+            y1 = abs(fft(s));
+            y2 = y1(1:ceil(n/2));
+            plot(y2);
+            xlabel('Frequency')
+            ylabel('Power')
+            T = sqrt(log(1/0.05)*n);
+            N_0 = 0.95*n/2;
+            y3 = y2(y2 > 0);
+            N_1 = sum(y3 < T);
+            d = (N_1 - N_0) / sqrt(n * 0.95 * 0.05 / 4);
+            P_value = erfc(abs(d)/sqrt(2));
+            if P_value > 0.01
+                result = true;
+            else
+                result = false;
+            end
+            
         end
         
         function res = Golomb(s)
