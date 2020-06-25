@@ -91,7 +91,10 @@ classdef TestChaos
             plot(y2);
             xlabel('Frequency')
             ylabel('Power')
+            hold on
             T = sqrt(log(1/0.05)*n);
+            plot([0 length(y2)], [T T], 'linewidth', 2, 'linestyle', '--');
+            hold off
             N_0 = 0.95*n/2;
             y3 = y2(y2 > 0);
             N_1 = sum(y3 < T);
