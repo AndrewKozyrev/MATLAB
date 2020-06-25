@@ -281,7 +281,7 @@ classdef CCA < handle
             end
         end
         
-        function [cypher_binary, cypher] = encode(self, msg, varargin)
+        function [cypher_binary, cypher, cypher_d] = encode(self, msg, varargin)
             %encode() encodes a decimal number with this non-linear model
             %encode(message) takes binary number and returns binary cypher
             if ( class(msg) == "string" || class(msg) == "char" || class(msg) == "double")
@@ -296,9 +296,13 @@ classdef CCA < handle
             %теперь нужно определить порядок следования зон
             %я не знаю как определить порядок следования зон
             %[key, ~] = self.getOrder(0.1, 0.1);
-            key = '03614725';
-            key_order = key - '0';  % get index of zones into an array
-            digits = base_transform - '0';  %get individual digits of the number
+            %key = '03614725';
+            %key_order = key - '0';  % get index of zones into an array
+            key_order = [0 5 10 2 7 12 4 9 1 6 11 3 8];
+            digits = nan( 1, length(base_transform) );
+            for i=1:1:length(base_transform)
+                digits(i) = base2dec(base_transform(i), self.period);   %get individual digits of the number
+            end
             
             if size(varargin, 2) > 0 && isa(varargin{1}, 'double')
                 offset = varargin{1};  %we start with zone of offset
@@ -318,16 +322,15 @@ classdef CCA < handle
                         next_zone = 1;
                     end
                     if key_order(next_zone) == digits(s)
-                        cypher = append( cypher, num2str(mod(i, length(key_order))) );
+                        cypher = append( cypher, dec2base(mod(i, length(key_order)), self.period) );
                         break
                     end
                     next_zone = mod(next_zone, length(key_order));
                     next_zone = next_zone + 1;
                 end
             end
-            cypher_decimal = num2str(base2dec(cypher, self.period));
-            temp = str2num(cypher_decimal);
-            cypher_binary = dec2bin(temp, L);
+            cypher_d = base2dec(cypher, self.period);
+            cypher_binary = dec2bin(cypher_d, L);
             if size(varargin, 2) > 1 && isa(varargin{2}, 'char') && varargin{2} == 'v'
                 fprintf("Encoded message base_%d   = %s\nEncoded message base_2  = %s\n", self.period, cypher, cypher_binary);            
             end
@@ -376,7 +379,11 @@ classdef CCA < handle
         function L_new = optimizeLength(self, L)
             % determine optimal length of message
             N = self.period;
-            L_new = ceil(log2(N^ceil( log10(2^L-1)/log10(N) )-1));
+            if L > 1
+                L_new = ceil(log2(N^ceil( log10(2^L-1)/log10(N) )-1));
+            else
+                L_new = nextpow2(N);
+            end
         end
 %% end of methods implementation        
         
