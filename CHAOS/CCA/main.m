@@ -1,17 +1,18 @@
 cd 'C:\Users\hitma\OneDrive\ROOT\Files\Job\Projects\MATLAB\CHAOS\CCA'
+clear, clc
 
 a = -0.75;      % parameter
 b = -0.55;      % parameter
 x1 = -0.2;       % initial conditions
 x2 = 0.2;       % initial conditions
-M = 1005;       % number of elements left out for transient
+M = 0;       % number of elements left out for transient
 N = 10^6;       % number of elements in a sequence
 
 object = CCA(a, b, x1, x2, 8, N, M);
 
 %%
-object.displayPortrait('1', 8);
-object.drawBorders(8);
+object.displayPortrait('1');
+object.drawBorders();
 
 % this yields key 14725836
 %% Encoding example
