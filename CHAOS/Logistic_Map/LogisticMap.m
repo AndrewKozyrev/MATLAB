@@ -20,8 +20,8 @@ classdef LogisticMap
         function xseq = getSequence(self, N, varargin)
             %logistic_map generates orbits
             % equation for mapping x_n+1 = r*x_n*(1-x_n)
-            % arguments: r = parameter; x_0 = seed; N = length of sequence; M =
-            % transient count
+            % arguments: N = length of sequence; varargin{1} = x_0;
+            % varargin{2} = mu; varargin{3} = M
             
             x_0 = rand;
             
@@ -69,20 +69,26 @@ classdef LogisticMap
             
         end
         
-        function e = cypher(self, m)
-            N = length(message);
-            x1 = self.getSequence(1, rand, self.mu_0);
-            xseq = self.getSequence(N, x1);
-            bin_seq = self.binary(xseq);
-            e = double(xor(bin_seq, m));
+        function [e, b, x3] = cypher(self, m)
+            N = length(m);
+            x0 = rand;
+            x1 = self.getSequence(1, x0, self.mu_0);
+            x2 = round(x1, 9);
+            x3 = self.getSequence(1, x2, self.mu);
+            xseq = self.getSequence(N, x3, self.mu, 0);
+            b = self.binary(xseq);
+            e = double(xor(b, m));
         end
         
-        function d = decypher(self, e)
+        function [d, b, x3] = decypher(self, e)
             N = length(e);
-            x1 = self.getSequence(1, rand, self.mu_0);
-            xseq = self.getSequence(N, x1);
-            bin_seq = self.binary(xseq);
-            d = double(xor(bin_seq, e));
+            x0 = rand;
+            x1 = self.getSequence(1, x0, self.mu_0);
+            x2 = round(x1, 9);
+            x3 = self.getSequence(1, x2, self.mu);
+            xseq = self.getSequence(N, x3, self.mu, 0);
+            b = self.binary(xseq);
+            d = double(xor(b, e));
         end
     end
     
