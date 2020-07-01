@@ -243,7 +243,8 @@ classdef Dyadic
         function y = getBinary(x, n, varargin)
             
             if size(varargin, 2) > 0 && varargin{1} == "approximate"
-                old_digits = digits(varargin{2});
+                new_digits = ceil(n*log10(2));         % I need this many digits to make binary sequence of length n
+                old_digits = digits(new_digits);
                 x = vpa(x);
             else
                 old_digits = digits;
