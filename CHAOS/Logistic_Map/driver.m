@@ -5,9 +5,9 @@ cd 'C:\Users\hitma\OneDrive\ROOT\Files\Job\Projects\MATLAB\CHAOS\Logistic_Map'
 clear, format long
 % variables
 
-mu      = 3.9;   %cipher parameter
+mu      = 4;   %cipher parameter
 mu_0    = 2.5;      %transit parameter
-M       = 10^3;        %length of transit process
+M       = 10^6;        %length of transit process
 n       = 15;         %length of final sequence
 
 object = LogisticMap(mu_0, mu, M);
@@ -76,3 +76,19 @@ ylim([0 1])
 xlabel("n")
 ylabel("x_n")
 hold off
+
+
+%% Autocorrelation
+seq1 = object.getSequence(10^3, rand);
+bin_seq1 = LogisticMap.binary(seq1);
+subplot(211)
+autocorr(bin_seq1, 999)
+ylim([-1 1])
+xlabel("Ò‰‚Ë„"); ylabel("¿ ‘");
+seq2 = object.getSequence(10^3, rand);
+bin_seq2 = LogisticMap.binary(seq2);
+subplot(212)
+[c,lags] = xcorr(bin_seq1, bin_seq2, 999, 'biased');
+stem(lags(1000:end),c(1000:end))
+ylim([0 1])
+xlabel("Ò‰‚Ë„"); ylabel("¬ ‘");
