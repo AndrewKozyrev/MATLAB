@@ -28,18 +28,18 @@ seq = s - '0';
 
 %% Test for Golomb's postulates
 tic
-test1 = TestChaos.Golomb(seq)
+test1 = TestChaos.Golomb(S)
 toc
 disp("done");
 
 
 %% Chi-square Test
 tic
-test2 = TestChaos.chiSquare(seq, 'plot')
+test2 = TestChaos.chiSquare(S, 'plot')
 toc
 disp("done");
 
 %% Spectral Analysis
 tic
-test3 = TestChaos.fourierTest(seq)
+test3 = TestChaos.fourierTest(S)
 toc

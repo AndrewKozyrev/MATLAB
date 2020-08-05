@@ -18,15 +18,14 @@ classdef LogisticMap
         end
         
         function xseq = getSequence(self, N, varargin)
-            %logistic_map generates orbits
+            % getSequence generates orbits
             % equation for mapping x_n+1 = r*x_n*(1-x_n)
             % arguments: N = length of sequence; varargin{1} = x_0;
             % varargin{2} = mu; varargin{3} = M
-            
             x_0 = rand;
             
-            if size(varargin, 2) > 0 && isa(varargin{1}, 'double')
-                x_0 = varargin{1};
+            if size(varargin, 2) > 0 && ( isa(varargin{1}, 'double') || isa(varargin{1}, 'sym') )
+                x_0 = varargin{1};          %Initial condition
             end
             
             if size(varargin, 2) > 1 && isa(varargin{2}, 'double')
@@ -62,11 +61,10 @@ classdef LogisticMap
             %lyapunov_exponent computes distance between two orbits
             %   f'(xi) = r - 2*r*xi
             r = self.mu;
-            out1 = abs(r - 2*r*xseq);
-            out2 = log(out1);
-            out3 = sum(out2, 'omitnan');
-            value = out3/ length(xseq);
-            
+            out1 = abs( r - 2*r*xseq );
+            out2 = log( out1 );
+            out3 = sum( out2, 'omitnan' );
+            value = out3 / length( xseq );
         end
         
         function [e, b, x3] = cypher(self, m)

@@ -281,9 +281,12 @@ classdef CCA < handle
             end
         end
         
-        function [cypher_binary, cypher, cypher_d] = encode(self, msg, varargin)
+        function [cypher_binary, cypher, cypher_d] = cypher(self, msg, varargin)
             %encode() encodes a decimal number with this non-linear model
-            %encode(message) takes binary number and returns binary cypher
+            % SYNOPSIS: encode(message) takes binary number and returns binary cypher
+            % ARGUMENTS: msg -- message to encode; 
+            % varargin{1} --  offset, i.e. the lag
+            % varargin{2} --  verbose
             if ( class(msg) == "string" || class(msg) == "char" || class(msg) == "double")
                 binary_input = num2str(msg);
             else
