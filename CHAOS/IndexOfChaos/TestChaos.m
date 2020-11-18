@@ -20,6 +20,9 @@ classdef TestChaos
             %   subsequences. Then I will count frequency of occurance for
             %   each code word in new sequence and then I will calculate
             %   chi-square statistics.
+            %   ARGUMENTS: s -- sequence to test
+            %   varargin{1} -- write 'plot' to show a graph P-values for all partitions
+            %   varargin{2} -- significance level, 0 < alpha < 1
             
             % By the way, I like to have bit-strings instead of arrays
             %str_s = sprintf('%d', s);
@@ -29,8 +32,20 @@ classdef TestChaos
                 seq = s;
             end
             
+            if size(varargin, 2) > 1 && isa(varargin{2}, 'double')
+                alpha = varargin{2};
+                if alpha < 0 || alpha > 1
+                    error("Significance level is incorrect.");
+                end
+            else
+                alpha = 0.95;
+            end
+            
             N = length(seq);
             M = 50;
+            % make sure that we have enough bits to make up to M-bit groups
+            % example: 100 bits can make 1-bit, 2-bit, 3-bit, ..., 49-bit, 50-bit
+            % partitions
             if M >= 0.5*N
                 M = floor(0.5*N);
             end
@@ -51,9 +66,9 @@ classdef TestChaos
                 % time to calculate chi-square statistics
                 K       =   2^n;
                 x_i = histcounts(nums', [nums_u' (max(nums_u) + 0.5)]);
-                m_i = L/K;
+                m_i = L/K;      % expected frequency of occurence of any number
                 c = sum(( x_i - m_i ).^2 / m_i) + L - L_u*(L/K);
-                if c > chi2inv(0.95, K-1)
+                if c > chi2inv(1-alpha, K-1)
                     h(n) = 1;
                 else
                     h(n) = 0;
@@ -64,6 +79,10 @@ classdef TestChaos
             if size(varargin, 2) > 0 && varargin{1} == "plot"
                 handle = plot(p, '.', 'markersize', 20);
                 handle.LineStyle = '--';
+                ylim([0 1]);
+                hold on
+                plot(xlim, [alpha alpha]);
+                hold off
                 xlabel('groups'); ylabel('P_v_a_l_u_e');
             end
             
@@ -74,6 +93,11 @@ classdef TestChaos
             % This functions implements graphical spectral test
             %   Detailed explanation is not ready yet
 
+            % Make sure a signal is a vector of integers
+            if isa(signal, 'char') || isa(signal, 'string')
+                signal = num2str(signal) - '0';
+            end
+            
             n = length(signal);
             s = nan(1, n);
             for i=1:1:n
