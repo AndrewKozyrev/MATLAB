@@ -19,8 +19,7 @@ temp = [temp1; temp2; temp3; temp4; temp5; temp6];
 tic
 for i = 1:1:78
     k = ceil(i/13);
-    [~, ~, cyp{i}] = object.encode(temp(k, :), i);
-    out{i} = dec2bin(cyp{i});
+    [out{i}, ~, ~] = object.cypher(temp(k, :), i);
 end
 end_time = toc
 s = strcat(out{:});
@@ -28,18 +27,18 @@ seq = s - '0';
 
 %% Test for Golomb's postulates
 tic
-test1 = TestChaos.Golomb(S)
+test1 = TestChaos.Golomb(s)
 toc
 disp("done");
 
 
 %% Chi-square Test
 tic
-test2 = TestChaos.chiSquare(S, 'plot')
+test2 = TestChaos.chiSquare(s, 'plot', 0.05)
 toc
 disp("done");
 
 %% Spectral Analysis
 tic
-test3 = TestChaos.fourierTest(S)
+test3 = TestChaos.fourierTest(s)
 toc
