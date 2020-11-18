@@ -286,7 +286,7 @@ classdef CCA < handle
             % SYNOPSIS: encode(message) takes binary number and returns binary cypher
             % ARGUMENTS: msg -- message to encode; 
             % varargin{1} --  offset, i.e. the lag
-            % varargin{2} --  verbose
+            % varargin{2} --  'v' for verbose
             if ( class(msg) == "string" || class(msg) == "char" || class(msg) == "double")
                 binary_input = num2str(msg);
             else
