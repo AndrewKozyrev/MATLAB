@@ -130,7 +130,7 @@ classdef CCA < handle
             % transient decay process                       
             if self.initialized == false
                 % drop first M unwanted points
-                self.transient(M);
+                self.transient(M, true);
                 self.initialized = true;
             end
             
@@ -171,6 +171,7 @@ classdef CCA < handle
             if size(varargin, 2) == 1 && isa(varargin{1}, 'logical') && varargin{1}
                 self.x1 = new_x1;
                 self.x2 = new_x2;
+                self.initialized = true;
             end
         end
         

@@ -9,16 +9,30 @@ classdef Dyadic
             %   Detailed explanation goes here
         end
         
-        function x_out = BSM(x_in)
-            %BSM is an acronym for Binary Shift Map
-            %   takes a real-valued argument x_in from [0 1] and applies the
-            %   following x_out = 2*x_in mod 1
-            if 0 <= double(x_in) && double(x_in) < 0.5
-                x_out = 2*x_in;
-            elseif 0.5 <= double(x_in) && double(x_in) <= 1
-                x_out = 2*x_in - 1;
+        function x_out = iterate(x_in)
+            %=======================================================================
+            %Dyadic.iterate(x_in)
+            %DESCRIPTION: совершает одну итерацию отображения Бернулли на
+            %входящее значение.
+            %PARAMETERS:
+            % x_in - входное значение, (double, symbolic, string)
+            %RETURNS: x_out, значение полученное после отображения Бернулли
+            %         x_out = 2*x_in (mod 1)
+            %EXAMPLE: 
+            %           Dyadic.iterate("4/9")
+            %           ans = 8/9
+            %=======================================================================
+            
+            % what is the type of x_in ?
+            if (isa(x_in, "string") || isa(x_in, "char")) && isnumeric(double(str2sym("2^(1/2)")))
+                x_in = str2sym(x_in);
+            end
+            if isAlways(0 <= double(x_in) && double(x_in) <= 1)
+                x_out = mod(2*x_in, 1);
+            elseif double(x_in) < 0 || double(x_in) > 1
+                error("Аргумент не может быть вне интервала [0, 1]: x = %s", x_in);
             else
-                error("Wrong argument: %d", x_in);
+                error("NumberFormatException: %s", x_in);
             end
             
         end
@@ -150,7 +164,7 @@ classdef Dyadic
             % INPUT: 0.2      OUTPUT: 3
             
             T = 1;
-            y = Dyadic.BSM(x);
+            y = Dyadic.iterate(x);
             
             
             % Transient process
@@ -159,7 +173,7 @@ classdef Dyadic
             max = 100;
             k = 1;
             while max > 0
-                y = Dyadic.BSM(y);
+                y = Dyadic.iterate(y);
                 if double(y) < double(delta)
                     delta = y;
                     max = max + 10*k^2;
@@ -173,10 +187,10 @@ classdef Dyadic
             end
             
             x = y;
-            y = Dyadic.BSM(x);
+            y = Dyadic.iterate(x);
 
             while double(abs(y - x)) ~= 0
-                y = Dyadic.BSM(y);
+                y = Dyadic.iterate(y);
                 T = T + 1;
             end
             
@@ -190,16 +204,16 @@ classdef Dyadic
             % INPUT: 1/6       OUTPUT: 1
             I = 0;
             x_0 = x;
-            y = Dyadic.BSM(x);
+            y = Dyadic.iterate(x);
             
             while y ~= x_0
                 for i=1:1:T-1
-                    y = Dyadic.BSM(y);
+                    y = Dyadic.iterate(y);
                 end
                 if y ~= x_0
                     I = I + 1;
-                    x_0 = Dyadic.BSM(x_0);
-                    y = Dyadic.BSM(x_0);
+                    x_0 = Dyadic.iterate(x_0);
+                    y = Dyadic.iterate(x_0);
                 end
             end
         end
@@ -215,61 +229,129 @@ classdef Dyadic
             % Transient
             for i=1:1:I
                 Z(numel(Z)+1) = x;
-                x = Dyadic.BSM(x);
+                x = Dyadic.iterate(x);
             end
             x_0 = x;
             S(1) = x_0;
-            y = Dyadic.BSM(x_0);
+            y = Dyadic.iterate(x_0);
             % Write to array
             while y ~= x_0
                 S(numel(S)+1) = y;
-                y = Dyadic.BSM(y);
+                y = Dyadic.iterate(y);
             end
             
         end
         
-        function x = getChaos(x_0, N, M)
-            
+        function x = generateSequence(x_0, N, M)
+            %=======================================================================
+            %Dyadic.generateSequence(x_0, N, M)
+            %DESCRIPTION: генерирует последовательность десятичных чисел
+            % которые получаются при применении отображения Бернулли
+            % на начальное условие "x_0". После переходного процесса в
+            % "M" итераций, генеруруется последовательность из N чисел.
+            %PARAMETERS:
+            % x_0 - initial value, (double, symbolic, string)
+            %   N - number of elements of generated sequence (unsigned int)
+            %   M - number of elements to skip (unsigned int)
+            %RETURNS: вектор из N значений типа double, new List<Double>(N)
+            %EXAMPLE: 
+            % Dyadic.generateSequence(0.41421356, 3, 5)
+            % ans = [0.2548    0.5097    0.0193]
+            %=======================================================================
+            digits(50);
             for j=1:1:M
-                x_0 = Dyadic.BSM(x_0);
+                backup = double(x_0);
+               try      %this is to handle symbolic nested procedure calls errors
+                   x_0 = Dyadic.iterate(x_0);
+                   double(x_0);
+               catch ME
+                   warning("%s", ME.identifier);
+                   x_0 = backup;
+                   x_0 = Dyadic.iterate(x_0);
+               end
             end
             x = nan(1, N);
             x(1) = x_0;
             for i=2:1:N
-                x(i) = Dyadic.BSM(x(i-1));
+                backup = double(x(i-1));
+                try             %this is to handle symbolic nested procedure calls errors
+                    x(i) = Dyadic.iterate(x(i-1));
+                    double(x(i));
+                catch ME
+                    warning("%s", ME.identifier);
+                    x(i-1) = backup;
+                    x(i) = Dyadic.iterate(x(i-1));
+                end
             end
         end
         
-        function y = getBinary(x, n, varargin)
+        function y = binary(x, n, varargin)
+            %=======================================================================
+            %Dyadic.binary(x, n, [optionals])
+            %DESCRIPTION:   переводит число x в двоичный вид, получает n
+            %               верных цифр двоичного представления числа x
+            %PARAMETERS:
+            %               x - исходное число [0, 1], (double, symbolic, string)
+            %               n - количество двоичных цифр
+            %               "approximate" - рассчитать требуемое число
+            %               значащих цифр исходного числа, для двоичного
+            %               представления
+            %               "vector" - вернуть результат в виде вектора
+            %RETURNS:       y - двоичное представление числа x 
+            %         y = dec2bin(x, n)
+            %EXAMPLE: 
+            %           Dyadic.binary("4/9", 12, "approximate")
+            %           ans = '011100011100'
+            %           Dyadic.binary("4/9", 12)
+            %           ans = '011100'
+            %=======================================================================
+            
+            old_digits = digits(333);
             
             if size(varargin, 2) > 0 && varargin{1} == "approximate"
-                new_digits = ceil(n*log10(2));         % I need this many digits to make binary sequence of length n
-                old_digits = digits(new_digits);
+                required_digits = ceil(n*log10(2));         % I need this many digits to make binary sequence of length n
+                digits(required_digits);
                 x = vpa(x);
             else
-                old_digits = digits;
                 x = sym(x);
             end
             
-            y = '';
-            temp = x;
-            t = '1';
-            s = '0';
-            
-            for i=1:1:n
-                x = x * 2;
-                if (x == 1) || (x == temp)
-                    y = strcat(y,t);
-                    break;
-                elseif double(x) > 1
-                    y = strcat(y, t);
-                    x = x - 1;
-                else
-                    y = strcat(y , s);
-                end 
+            if isAlways(x < 0)
+                error("IllegalArgumentException: %s", x);
             end
             
-            y = y - '0';
+            x = mod(x, 1);
+            v = double(x);
+            
+            y = '';
+            
+            % алгоритм работы затухание
+            % заменяем точное значение на десятичное приближение, 
+            % вычисляем точное значение параллельно
+            % с приближенным, после 41
+            % итерации обновляем затухнувшее значение х. 
+            for i=1:1:n
+                v = v * 2;
+                if v < 1
+                    y = strcat(y, '0');
+                else
+                    if isAlways(v == 1)
+                        y = strcat(y,'1');
+                        break;
+                    end
+                    y = strcat(y, '1');
+                    v = v - 1;
+                end
+                if mod(i, 31) == 0
+                    x = mod(2^31*x, 1);
+                    v = double(x);
+                end
+            end
+            
+            if size(varargin, 2) > 1 && varargin{2} == "vector"
+                y = y - '0';
+            end
+            
             digits(old_digits);
         end
         
@@ -278,7 +360,7 @@ classdef Dyadic
             % output e - encrypted message
             %
             n = length(m); 
-            s = Dyadic.getBinary(x, n + l);
+            s = Dyadic.binary(x, n + l);
             e = double(xor(m, s(l+1:end)));
         end
         
@@ -287,7 +369,7 @@ classdef Dyadic
             % output d - decrypted message
             %
             n = length(e); 
-            s = Dyadic.getBinary(x, n + l);
+            s = Dyadic.binary(x, n + l);
             d = double(xor(e, s(l+1:end)));
         end
     end
