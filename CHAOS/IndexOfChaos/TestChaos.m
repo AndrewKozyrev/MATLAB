@@ -17,12 +17,14 @@ classdef TestChaos
             %   Give me a binary sequence, and I will run chi-square test for all
             %   possible partitions of your sequence. That is I will make
             %   a new sequence made from 1 bit, 2 bit, 3 bit, 4 bit, etc.
-            %   subsequences. Then I will count frequency of occurance for
-            %   each code word in new sequence and then I will calculate
+            %   subsequences, convert each to decimal number. 
+            %   Then I will count frequency of occurance for
+            %   each decimal number in new sequence and then I will calculate
             %   chi-square statistics.
             %   ARGUMENTS: s -- sequence to test
             %   varargin{1} -- write 'plot' to show a graph P-values for all partitions
-            %   varargin{2} -- significance level, 0 < alpha < 1
+            %   varargin{2} -- significance level, 0 < alpha < 1, the less
+            %   the more accurate is the result
             
             % By the way, I like to have bit-strings instead of arrays
             %str_s = sprintf('%d', s);
@@ -42,12 +44,12 @@ classdef TestChaos
             end
             
             N = length(seq);
-            M = 50;
+            M = fix(2*log10(N));
             % make sure that we have enough bits to make up to M-bit groups
             % example: 100 bits can make 1-bit, 2-bit, 3-bit, ..., 49-bit, 50-bit
             % partitions
             if M >= 0.5*N
-                M = floor(0.5*N);
+                error("Are you nuts?");
             end
             
             for n=1:1:M
@@ -58,6 +60,12 @@ classdef TestChaos
                 words   =   reshape(temp, n, [])';
                 % I get some numbers in nums vector
                 nums    =   bi2de(words, 'left-msb');
+                figure
+                nums_min = min(nums);
+                nums_max = max(nums);
+                edges = [(nums_min-0.5):1:(nums_max+0.5)];
+                handle = histogram(nums, edges, 'normalization', 'countdensity');
+                
                 % I want to get only unique elements
                 nums_u  =   unique(nums);
                 L_u     =   length(nums_u);
@@ -77,6 +85,7 @@ classdef TestChaos
             end
             
             if size(varargin, 2) > 0 && varargin{1} == "plot"
+                figure("Name", "Main");
                 handle = plot(p, '.', 'markersize', 20);
                 handle.LineStyle = '--';
                 ylim([0 1]);
