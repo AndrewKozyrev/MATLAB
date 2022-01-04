@@ -1,8 +1,0 @@
-   r:	 3.569945671870887
- x_0: 	 0.5
-seed:	 0.81080940665614422731512174469682
-
-
-expected cycle length: 	1048576  (10^-19 < distance < 10^-18)
-recorded sequence length: 1024
-distance threshold between points: 10^-6

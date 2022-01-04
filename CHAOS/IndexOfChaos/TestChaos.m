@@ -12,7 +12,7 @@ classdef TestChaos
             %   Does nothing at the moment
         end
         
-        function [res, h, p] = chiSquare(s, varargin)
+        function [res, h, p] = chiSquare(s, needPlot, varargin)
             %chiSquare gets pearson coeffs for all runs of sequence
             %   Give me a binary sequence, and I will run chi-square test for all
             %   possible partitions of your sequence. That is I will make
@@ -22,8 +22,9 @@ classdef TestChaos
             %   each decimal number in new sequence and then I will calculate
             %   chi-square statistics.
             %   ARGUMENTS: s -- sequence to test
-            %   varargin{1} -- write 'plot' to show a graph P-values for all partitions
-            %   varargin{2} -- significance level, 0 < alpha < 1, the less
+            %   needPlot -- true if you need histograms, false if you don't
+            %               shows a graph P-values for all partitions
+            %   varargin{1} -- significance level, 0 < alpha < 1, the less
             %   the more accurate is the result
             
             % By the way, I like to have bit-strings instead of arrays
@@ -34,8 +35,8 @@ classdef TestChaos
                 seq = s;
             end
             
-            if size(varargin, 2) > 1 && isa(varargin{2}, 'double')
-                alpha = varargin{2};
+            if size(varargin, 2) > 0 && isa(varargin{1}, 'double')
+                alpha = varargin{1};
                 if alpha < 0 || alpha > 1
                     error("Significance level is incorrect.");
                 end
@@ -44,12 +45,18 @@ classdef TestChaos
             end
             
             N = length(seq);
-            M = fix(2*log10(N));
+            M = floor(log2(N));
             % make sure that we have enough bits to make up to M-bit groups
             % example: 100 bits can make 1-bit, 2-bit, 3-bit, ..., 49-bit, 50-bit
             % partitions
-            if M >= 0.5*N
-                error("Are you nuts?");
+            if M >= 0.5*N               % if this happens, call me +79296721561
+                error("M = %s, N = %s", M, N);
+            end
+            
+            % если нужны гистограммы распределения чисел по группам
+            if needPlot == 1
+                folder_name = "histograms@" + datestr(datetime, 'dd_mm_yyyy-hh_MM_ss');
+                mkdir(folder_name);
             end
             
             for n=1:1:M
@@ -60,11 +67,18 @@ classdef TestChaos
                 words   =   reshape(temp, n, [])';
                 % I get some numbers in nums vector
                 nums    =   bi2de(words, 'left-msb');
-                figure
-                nums_min = min(nums);
-                nums_max = max(nums);
-                edges = [(nums_min-0.5):1:(nums_max+0.5)];
-                handle = histogram(nums, edges, 'normalization', 'countdensity');
+                if needPlot == 1
+                    f = figure
+                    nums_min = min(nums);
+                    nums_max = max(nums);
+                    edges = [(nums_min-0.5):1:(nums_max+0.5)];
+                    handle = histogram(nums, edges, 'normalization', 'countdensity');
+                    xlabel('варианта'); ylabel('частота');
+                    title("Группировка по " + string(n) + " бит");
+                    grid on, box off, grid minor
+                    saveas(gcf, folder_name + "/гистограмма_" + string(n) + "_bits.png");
+                    close(f);
+                end
                 
                 % I want to get only unique elements
                 nums_u  =   unique(nums);
@@ -84,8 +98,8 @@ classdef TestChaos
                 p(n)    = chi2cdf(c, K-1, 'upper');
             end
             
-            if size(varargin, 2) > 0 && varargin{1} == "plot"
-                figure("Name", "Main");
+            if needPlot
+                f = figure("Name", "Main");
                 handle = plot(p, '.', 'markersize', 20);
                 handle.LineStyle = '--';
                 ylim([0 1]);
@@ -93,6 +107,10 @@ classdef TestChaos
                 plot(xlim, [alpha alpha]);
                 hold off
                 xlabel('groups'); ylabel('P_v_a_l_u_e');
+                title("Уровень значимости");
+                grid on, box off, grid minor
+                saveas(gcf, folder_name + "/уровень_значимости_" + string(N) + "_bits.png");
+                close(f);
             end
             
             res = 1-sum(h)/M;
@@ -153,10 +171,16 @@ classdef TestChaos
             
             N = length(seq);
             ni = histcounts(seq, [0 1 1.5]);
+            fprintf("Проверка постулата №1:\n");
+            fprintf("Число нулей: %d\nЧисло единиц: %d\n", ni(1), ni(2));
             if abs( ni(1) - ni(2) ) > 1
                 res(1) = 0;
+                fprintf("Вывод: провал постулата, т. к. число нулей больше числа единиц более, чем на 1.\n");
+            else
+                fprintf("Вывод: постулат удовлетворен.\n");
             end
             
+            fprintf("\n\nПроверка постулата №2:");
             % Question is: how many runs of length n do we have in seq?
             count_ones = zeros(1, N); count_zeros = zeros(1, N);
             % partition sequence according to runs of different length
@@ -187,21 +211,39 @@ classdef TestChaos
             end
                     
             total_number_of_runs = sum(count_ones) + sum(count_zeros);
+            fprintf("\nОбщее количество серий: %d", total_number_of_runs);
             T = nextpow2(total_number_of_runs);
-            k = 1:1:T;
-            runs_of_length_k = count_ones(1:T) + count_zeros(1:T);
-            diff = abs(count_ones(1:T) - count_zeros(1:T));
-            ratio = diff ./ runs_of_length_k;
-            condition1 = runs_of_length_k < floor( total_number_of_runs ./ 2.^k );
-            condition2 = runs_of_length_k ~= 0;
-            condition3 = ratio > 0.02;
-            condition4 = diff > 1;
-            resulting_condition = condition1 | condition2 & condition3 & condition4;
-            if any(resulting_condition)
-                res(2) = 0;
+            for k = 1:1:T
+                runs_of_length_k = count_ones(k) + count_zeros(k);
+                diff = abs(count_ones(k) - count_zeros(k));
+                ratio = diff / runs_of_length_k;
+                condition1 = runs_of_length_k < floor( total_number_of_runs / 2^k );
+                fprintf("\nКоличество серий длины %d: %d из %d", k, runs_of_length_k, total_number_of_runs);
+                if condition1
+                    fprintf("\n\t%d < 1/%d x %d = %d", runs_of_length_k, 2^k, total_number_of_runs, floor(sym(total_number_of_runs)/2^k));
+                    fprintf("\nВывод: несогласие с постулатом, так как количество серий длины %d меньше, чем 1/%d от общего количества серий", k, 2^k);
+                    res(2) = 0;
+                    break;
+                else
+                    fprintf("\n\t%d >= 1/%d x %d = %d", runs_of_length_k, 2^k, total_number_of_runs, floor(sym(total_number_of_runs)/2^k));
+                end
+                condition2 = runs_of_length_k ~= 0;
+                condition3 = ratio > 0.02;
+                condition4 = diff > 1;
+                resulting_condition = condition2 & condition3 & condition4;
+                fprintf("\n\tколичество единиц: %d\n\tколичество нулей: %d", count_ones(k), count_zeros(k));
+                if any(resulting_condition)
+                    fprintf("\nВывод: несогласие с постулатом, так как количество единиц в серии отличается от количества нулей на %d", diff);
+                    res(2) = 0;
+                    break;
+                end
             end
+            fprintf("\nВывод: постулат удовлетворен.");
             
             % Now it's time to test for third postulate
+            fprintf("\n\n\nПроверка постулата №3:");
+            fprintf("\n\t%d x Rn(%d) = %d", N, 0, N);
+            fprintf("\n\t%d x Rn(%d) = %d", N, N, N);
             shifted_seq = circshift(seq, N-1);
             temp = (2*seq - 1).*(2*shifted_seq - 1);
             CONSTANT = sum(temp);
@@ -209,7 +251,9 @@ classdef TestChaos
                 shifted_seq = circshift(seq, N-tau);
                 temp = (2*seq - 1).*(2*shifted_seq - 1);
                 NR_tau = sum(temp);
+                fprintf('\n\t%d x Rn(%d) = %d', N, tau, NR_tau);
                 if any(NR_tau ~= CONSTANT)
+                    fprintf("\nВывод: несогласие с постулатом, поскольку величина N x Rn(t) не двузначная");
                     res(3) = 0;
                     break
                 end

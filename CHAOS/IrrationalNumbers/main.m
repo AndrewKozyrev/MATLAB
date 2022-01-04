@@ -1,10 +1,11 @@
-%% Our noise
+%%
 cd 'C:\Users\hitma\OneDrive\ROOT\Files\Job\Projects\MATLAB\CHAOS\IrrationalNumbers';
-clear, format long
-% variables
+clc, clear, format long
+
+%% generation procedure
 n = 1000000;
 tic
-x = sym(5^sym(1/2)+1)/2;
+x = sym(2^sym(1/2));
 y = x;
 k = 1000;
 for i=1:1:n/k
@@ -15,6 +16,6 @@ end
 cypher_time = toc
 s1 = num2str(join(string(s), ''));
 
-fid = fopen('fibonacci_number_irrational_binary_1000000_digits.txt', 'w');
+fid = fopen('root2_irrational_binary_1000000_digits.txt', 'w');
 fprintf(fid,'%s', s1);
 fclose(fid);
